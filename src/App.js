@@ -11,7 +11,7 @@ function App(props) {
 
   const [list, setList] = useState([])
 
-  const submitUser = user => { 
+  const submitUser = user => {
 
     axios
       .post('http://localhost:5000/api/login', user)
