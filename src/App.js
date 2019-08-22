@@ -1,57 +1,100 @@
-import React from 'react';
-import { useEffect, useState } from 'react';
-import './App.css';
+import React, { useState } from 'react'
+import axios from 'axios'
+import { Switch, Route, withRouter } from 'react-router-dom'
 
-function App() {
-  const [date, setDate] = useState(null);
-  useEffect(() => {
-    async function getDate() {
-      const res = await fetch('/api/date');
-      const newDate = await res.text();
-      setDate(newDate);
-    }
-    getDate();
-  }, []);
+import { axize } from './utils'
+import Users from './components/Users'
+import Login from './components/Login'
+import './App.css'
+
+function App(props) {
+
+  const [list, setList] = useState([])
+
+  const submitUser = user => { 
+
+    axios
+      .post('http://localhost:5000/api/login', user)
+      .then(rez => {
+        localStorage.setItem('token', rez.data.payload)
+        props.history.push('/users')
+      })
+      .catch(rez => console.error(rez))
+
+  }
+
+  const grabUsers = _ => {
+
+    axize()
+      .get('http://localhost:5000/api/friends')
+      .then(res => setList(res.data))
+      .catch(err => console.error(err))
+
+  }
+
+  const addUser = user => {
+
+    axize()
+      .post('http://localhost:5000/api/friends', user)
+      .then(rez => setList(rez.data))
+      .catch(err => console.error(err))
+
+  }
+
+  const updateUser = user => {
+
+    axize()
+      .put(`http://localhost:5000/api/friends/${user.id}`, user)
+      .then(res => setList(res.data))
+      .catch(err => console.error(err))
+
+  }
+
+  const delUser = id => {
+
+    axize()
+      .delete(`http://localhost:5000/api/friends/${id}`)
+      .then(rez => setList(rez.data))
+      .catch(err => console.error(err))
+
+  }
+
   return (
-    <main>
-      <h1>Create React App + Go API</h1>
-      <h2>
-        Deployed with{' '}
-        <a
-          href="https://zeit.co/docs"
-          target="_blank"
-          rel="noreferrer noopener"
-        >
-          ZEIT Now
-        </a>
-        !
-      </h2>
-      <p>
-        <a
-          href="https://github.com/zeit/now-examples/blob/master/create-react-app-go"
-          target="_blank"
-          rel="noreferrer noopener"
-        >
-          This project
-        </a>{' '}
-        was bootstrapped with{' '}
-        <a href="https://facebook.github.io/create-react-app/">
-          Create React App
-        </a>{' '}
-        and contains three directories, <code>/public</code> for static assets,{' '}
-        <code>/src</code> for components and content, and <code>/api</code>{' '}
-        which contains a serverless <a href="https://golang.org/">Go</a>{' '}
-        function. See{' '}
-        <a href="/api/date">
-          <code>api/date</code> for the Date API with Go
-        </a>
-        .
-      </p>
-      <br />
-      <h2>The date according to Go is:</h2>
-      <p>{date ? date : 'Loading date...'}</p>
-    </main>
-  );
+
+    <div className="App">
+      <header className="App-header">
+        <h1>Fake Auth</h1>
+
+        <Switch>
+
+          <Route
+            exact path='/'
+            render={props =>
+              <Login
+                {...props}
+                submitUser={submitUser}
+              />}
+          />
+
+          <Route
+            path='/users'
+            render={props => <Users
+              {...props}
+              grabUsers={grabUsers}
+              addUser={addUser}
+              updateUser={updateUser}
+              delUser={delUser}
+              list={list}
+            />}
+          />
+
+        </Switch>
+
+      </header>
+    </div>
+
+  )
+
 }
 
-export default App;
+export default withRouter(App)
